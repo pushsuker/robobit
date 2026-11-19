@@ -1,3 +1,8 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ภารกิจหุ่นยนต์บิต</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,6 +27,8 @@
 }
 
 * { box-sizing: border-box; }
+body { margin: 0; }
+img { max-width: 100%; }
 [hidden] { display: none !important; }
 html { font-size: clamp(16px, 1.15vw + 8px, 21px); }
 body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 1rem; line-height: 1.6; }
@@ -286,6 +293,8 @@ pre.code .kw { color: #C2185B; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
 </style>
+</head>
+<body>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
@@ -840,3 +849,5 @@ pre.code .kw { color: #C2185B; }
   show(location.hash.slice(1) || 'start');
 })();
 </script>
+</body>
+</html>
