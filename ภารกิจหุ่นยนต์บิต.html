@@ -1,0 +1,842 @@
+<title>ภารกิจหุ่นยนต์บิต</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: projector-first classroom game. Sticky tab bar, one view at a time, big chunky controls readable from the back row.
+   Deliberately one bright light theme: projectors wash out dark pages, so it stays bright in every viewer theme. */
+:root {
+  color-scheme: light;
+  --bg: #E8F4FF; --surface: #FFFFFF; --ink: #14213D; --muted: #4A5878; --line: #C9DDF2;
+  --accent: #1A7CFF; --accent-ink: #FFFFFF; --accent-shadow: #0B57C9; --accent-soft: #DCEBFF;
+  --pink: #FF4F8B; --pink-soft: #FFE1EC; --purple: #7C4DFF; --purple-soft: #ECE4FF;
+  --star: #FFA800; --star-soft: #FFF0C2;
+  --good: #15A04A; --good-bg: #D6F8E2; --bad: #F03E3E; --bad-bg: #FFE0E0;
+  --wall: #7C4DFF; --cell: #FFFFFF; --home: #B9F2CD; --board: #9FD0FF;
+  --f-display: "Mitr", "Leelawadee UI", "Tahoma", sans-serif;
+  --f-body: "IBM Plex Sans Thai", "Leelawadee UI", "Tahoma", sans-serif;
+  --f-mono: "JetBrains Mono", "Consolas", monospace;
+  --r: 16px;
+  --orange: #FF8A00; --orange-soft: #FFE7CC;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { font-size: clamp(16px, 1.15vw + 8px, 21px); }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 1rem; line-height: 1.6; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
+h1, h2, h3 { font-family: var(--f-display); font-weight: 500; line-height: 1.25; text-wrap: balance; margin: 0; }
+p { margin: 0; }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+.wrap { max-width: 1180px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+/* top bar */
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--surface); border-bottom: 1px solid var(--line); }
+.bar .wrap { display: flex; align-items: center; gap: 1rem; padding-block: .55rem; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: .55rem; font-family: var(--f-display); font-size: 1.1rem; font-weight: 500; }
+.brand svg { width: 2rem; height: 2rem; }
+.tabs { display: flex; gap: .35rem; margin-left: auto; flex-wrap: wrap; }
+.tab { border: 0; background: transparent; padding: .45rem .9rem; border-radius: 999px; font-family: var(--f-display); color: var(--muted); }
+.tab[aria-selected="true"] { background: var(--accent-soft); color: var(--accent); }
+.tab .n { display: inline-grid; place-items: center; width: 1.4em; height: 1.4em; border-radius: 50%; border: 1.5px solid currentColor; font-size: .75em; margin-right: .35em; }
+.icon-btn { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: .35rem .7rem; font-size: .85rem; color: var(--muted); }
+
+main { padding-block: 1.6rem 3rem; }
+.view { display: grid; gap: 1.5rem; }
+.eyebrow { font-family: var(--f-display); font-size: .8rem; letter-spacing: .08em; color: var(--accent); }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 1.4rem; }
+.muted { color: var(--muted); }
+
+/* chunky buttons */
+.btn { border: 0; border-radius: 14px; padding: .75rem 1.4rem; font-family: var(--f-display); font-size: 1.05rem; font-weight: 500;
+  background: var(--accent); color: var(--accent-ink); box-shadow: 0 4px 0 var(--accent-shadow); transition: transform .08s, box-shadow .08s; }
+.btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--accent-shadow); }
+.btn.ghost { background: var(--surface); color: var(--ink); box-shadow: 0 4px 0 var(--line); border: 2px solid var(--line); }
+.btn.ghost:active { box-shadow: 0 1px 0 var(--line); }
+.btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+/* START */
+.hero { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 2rem; align-items: center; }
+.hero h1 { font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 600; }
+.hero .lead { font-size: 1.15rem; color: var(--muted); margin-top: .6rem; max-width: 34em; }
+.hero-bot { justify-self: center; width: min(100%, 300px); }
+.goals { display: grid; gap: .6rem; margin-top: 1.2rem; padding: 0; list-style: none; }
+.goals li { display: flex; gap: .7rem; align-items: baseline; }
+.goals b { font-family: var(--f-display); font-weight: 500; color: var(--accent); min-width: 1.6rem; }
+.mission { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1.2rem; align-items: center; border-left: 0; background: var(--star-soft); border-color: transparent; }
+.mission h2 { font-size: 1.5rem; }
+.chips { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .8rem; }
+.chip { background: var(--surface); border-radius: 999px; padding: .2rem .8rem; font-size: .9rem; border: 1px solid var(--line); }
+
+/* LEARN */
+.def { font-family: var(--f-display); font-size: clamp(1.3rem, 2.4vw, 1.9rem); font-weight: 400; max-width: 30em; }
+.def mark { background: var(--accent-soft); color: var(--accent); padding: 0 .25em; border-radius: 6px; }
+.traits { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; }
+.trait { padding: 1.1rem; border-radius: var(--r); background: var(--surface); border: 1px solid var(--line); }
+.trait .k { font-family: var(--f-mono); color: var(--accent); font-size: .8rem; }
+.trait h3 { font-size: 1.15rem; margin: .2rem 0 .3rem; }
+.trait p { color: var(--muted); font-size: .92rem; }
+.reps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+.rep h3 { font-size: 1.1rem; margin-bottom: .6rem; }
+.rep ol { margin: 0; padding-left: 1.3rem; display: grid; gap: .25rem; }
+pre.code { margin: 0; font-family: var(--f-mono); font-size: .82rem; line-height: 1.75; background: var(--cell); border-radius: 10px; padding: .9rem; overflow-x: auto; white-space: pre; }
+pre.code .kw { color: var(--accent); font-weight: 500; }
+.flow { width: 100%; height: auto; display: block; }
+.flow .box { fill: var(--surface); stroke: var(--ink); stroke-width: 1.6; }
+.flow .term { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.6; }
+.flow .dec { fill: var(--star-soft); stroke: var(--star); stroke-width: 1.8; }
+.flow text { fill: var(--ink); font-family: var(--f-body); font-size: 12.5px; text-anchor: middle; dominant-baseline: middle; }
+.flow .lbl { fill: var(--muted); font-size: 11.5px; }
+.flow .ln { stroke: var(--muted); stroke-width: 1.5; fill: none; }
+.flow .ah { fill: var(--muted); }
+
+.activity { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1.5rem; align-items: center; }
+.timer { font-family: var(--f-mono); font-size: clamp(2.6rem, 6vw, 4rem); font-variant-numeric: tabular-nums; text-align: center; }
+.timer.done { color: var(--bad); }
+.timer-ctl { display: flex; gap: .6rem; justify-content: center; margin-top: .5rem; flex-wrap: wrap; }
+.answer-list { margin: .8rem 0 0; padding-left: 1.4rem; display: grid; gap: .2rem; font-size: 1.05rem; }
+
+/* ROBOT */
+.robot-head { display: flex; flex-wrap: wrap; gap: 1rem; align-items: end; justify-content: space-between; }
+.levels { display: flex; gap: .5rem; flex-wrap: wrap; }
+.lvl { border: 2px solid var(--line); background: var(--surface); border-radius: 12px; padding: .45rem 1rem; font-family: var(--f-display); }
+.lvl[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.lvl .ok { color: var(--good); }
+.robot-grid { display: grid; grid-template-columns: minmax(0, min(72vh, 560px)) minmax(0, 1fr); gap: 1.6rem; align-items: start; }
+.board { position: relative; width: 100%; aspect-ratio: 1; max-width: 560px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); grid-template-rows: repeat(5, minmax(0, 1fr)); gap: 6px; padding: 6px; background: var(--line); border-radius: 18px; }
+.cell { background: var(--cell); border-radius: 10px; display: grid; place-items: center; position: relative; min-height: 0; min-width: 0; overflow: hidden; }
+.cell svg { position: absolute; inset: 0; margin: auto; }
+.cell .coord { position: absolute; left: 6px; top: 3px; font-family: var(--f-mono); font-size: .6rem; color: var(--muted); opacity: .7; }
+.cell.wall { background: var(--wall); background-image: repeating-linear-gradient(45deg, transparent 0 8px, rgba(0,0,0,.12) 8px 16px); }
+.cell.home { background: var(--home); }
+.cell.start { box-shadow: inset 0 0 0 3px var(--accent-soft); }
+.cell svg { width: 62%; height: 62%; }
+.star-ic { fill: var(--star); transition: transform .3s, opacity .3s; }
+.star-ic.got { transform: scale(0); opacity: 0; transform-origin: center; }
+.home-ic { fill: var(--good); }
+.bot { position: absolute; width: calc((100% - 12px - 24px) / 5); height: calc((100% - 12px - 24px) / 5); transition: left .38s ease, top .38s ease; display: grid; place-items: center; pointer-events: none; z-index: 2; }
+.bot svg { width: 84%; height: 84%; filter: drop-shadow(0 4px 0 rgba(0,0,0,.18)); }
+.bot.crash svg { animation: shake .45s; }
+.bot.win svg { animation: hop .6s 2; }
+@keyframes shake { 0%,100% { transform: translateX(0) } 20%,60% { transform: translateX(-9%) rotate(-8deg) } 40%,80% { transform: translateX(9%) rotate(8deg) } }
+@keyframes hop { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-22%) } }
+
+.ctl { display: grid; gap: 1.1rem; min-width: 0; }
+.task { font-size: 1.05rem; }
+.task b { font-family: var(--f-display); font-weight: 500; }
+.pad { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .6rem; }
+.pad .btn { font-size: 1.7rem; padding: .55rem 0; line-height: 1.2; }
+.pad .btn small { display: block; font-size: .78rem; font-family: var(--f-body); }
+.prog-wrap { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: .9rem; }
+.prog-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: .6rem; gap: .5rem; flex-wrap: wrap; }
+.prog-top h3 { font-size: 1rem; }
+.count { font-family: var(--f-mono); font-variant-numeric: tabular-nums; color: var(--muted); font-size: .9rem; }
+.prog { display: flex; flex-wrap: wrap; gap: .4rem; min-height: 3.1rem; align-content: flex-start; }
+.prog .empty { color: var(--muted); font-size: .92rem; align-self: center; }
+.cmd { position: relative; border: 2px solid var(--line); background: var(--cell); border-radius: 10px; width: 2.7rem; height: 2.7rem; font-size: 1.35rem; display: grid; place-items: center; padding: 0; }
+.cmd i { position: absolute; top: -.55rem; left: -.35rem; font-style: normal; font-family: var(--f-mono); font-size: .62rem; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 0 .25rem; color: var(--muted); }
+.cmd.now { border-color: var(--accent); background: var(--accent-soft); }
+.cmd.done { opacity: .5; }
+.cmd.err { border-color: var(--bad); background: var(--bad-bg); }
+.run-row { display: flex; gap: .6rem; flex-wrap: wrap; }
+.run-row .btn { flex: 1 1 auto; }
+.msg { border-radius: 12px; padding: .8rem 1rem; background: var(--cell); font-size: 1.02rem; min-height: 3rem; }
+.msg.good { background: var(--good-bg); color: var(--good); }
+.msg.bad { background: var(--bad-bg); color: var(--bad); }
+.hint { font-size: .85rem; color: var(--muted); }
+
+/* QUIZ */
+.quiz { max-width: 860px; margin: 0 auto; width: 100%; display: grid; gap: 1.3rem; }
+.qtop { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 1rem; align-items: center; }
+.pbar { height: 1rem; background: var(--line); border-radius: 999px; overflow: hidden; }
+.pbar span { display: block; height: 100%; width: 0; background: var(--good); border-radius: 999px; transition: width .4s; }
+.hearts, .xp { font-family: var(--f-display); display: flex; align-items: center; gap: .3rem; white-space: nowrap; }
+.hearts svg { width: 1.3rem; height: 1.3rem; fill: var(--bad); }
+.hearts svg.lost { fill: var(--line); }
+.xp { color: var(--star); }
+.qcard { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: clamp(1.2rem, 3vw, 2.2rem); display: grid; gap: 1.2rem; }
+.qkind { font-family: var(--f-display); color: var(--accent); font-size: .85rem; letter-spacing: .05em; }
+.qtext { font-size: clamp(1.3rem, 2.4vw, 1.8rem); font-family: var(--f-display); font-weight: 500; }
+.opts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem; }
+.opt { display: flex; gap: .8rem; align-items: center; text-align: left; border: 2px solid var(--line); background: var(--surface); border-radius: 14px; padding: .9rem 1rem; box-shadow: 0 4px 0 var(--line); font-size: 1.1rem; }
+.opt .key { flex: none; width: 2rem; height: 2rem; border-radius: 8px; border: 2px solid var(--line); display: grid; place-items: center; font-family: var(--f-mono); font-size: .85rem; color: var(--muted); }
+.opt[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 4px 0 var(--accent); }
+.opt.right { border-color: var(--good); background: var(--good-bg); box-shadow: 0 4px 0 var(--good); }
+.opt.wrong { border-color: var(--bad); background: var(--bad-bg); box-shadow: 0 4px 0 var(--bad); }
+.slots { min-height: 4.4rem; border-bottom: 2px solid var(--line); display: flex; flex-wrap: wrap; gap: .5rem; padding-bottom: .7rem; align-content: flex-start; }
+.bank { display: flex; flex-wrap: wrap; gap: .6rem; justify-content: center; }
+.tile { border: 2px solid var(--line); background: var(--surface); border-radius: 12px; padding: .5rem .9rem; box-shadow: 0 3px 0 var(--line); font-size: 1.05rem; }
+.tile.used { visibility: hidden; }
+.tile .ord { font-family: var(--f-mono); color: var(--accent); margin-right: .3rem; font-size: .85rem; }
+.steps { display: grid; gap: .55rem; }
+.step { display: flex; gap: .9rem; align-items: center; text-align: left; border: 2px solid var(--line); background: var(--surface); border-radius: 12px; padding: .65rem 1rem; font-size: 1.08rem; }
+.step .no { font-family: var(--f-mono); color: var(--muted); }
+.step[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.step.right { border-color: var(--good); background: var(--good-bg); }
+.step.wrong { border-color: var(--bad); background: var(--bad-bg); }
+.mini-wrap { display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap; }
+.mini { display: grid; grid-template-columns: repeat(3, 3.6rem); grid-template-rows: repeat(3, 3.6rem); gap: 4px; background: var(--line); padding: 4px; border-radius: 12px; }
+.mini div { background: var(--cell); border-radius: 8px; display: grid; place-items: center; font-family: var(--f-display); font-size: 1.2rem; position: relative; }
+.mini div.me { background: var(--accent-soft); }
+.mini div.me svg { width: 80%; height: 80%; }
+.seq { font-size: 2rem; letter-spacing: .3em; font-family: var(--f-mono); }
+.shape { width: 7rem; height: auto; }
+.shape path { fill: var(--star-soft); stroke: var(--star); stroke-width: 3; }
+
+.fb { border-radius: 16px; padding: 1rem 1.2rem; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1rem; align-items: center; background: var(--surface); border: 1px solid var(--line); }
+.fb.good { background: var(--good-bg); border-color: transparent; }
+.fb.bad { background: var(--bad-bg); border-color: transparent; }
+.fb h3 { font-size: 1.25rem; }
+.fb.good h3 { color: var(--good); }
+.fb.bad h3 { color: var(--bad); }
+.fb p { font-size: .98rem; }
+.fb.good .btn { background: var(--good); box-shadow: 0 4px 0 color-mix(in srgb, var(--good) 70%, black); color: var(--surface); }
+.fb.bad .btn { background: var(--bad); box-shadow: 0 4px 0 color-mix(in srgb, var(--bad) 70%, black); color: var(--surface); }
+
+.result { text-align: center; display: grid; gap: 1rem; justify-items: center; }
+.result h2 { font-size: clamp(1.8rem, 4vw, 2.6rem); }
+.stats { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
+.stat { border: 2px solid var(--line); border-radius: 14px; padding: .7rem 1.3rem; min-width: 9rem; }
+.stat b { display: block; font-family: var(--f-display); font-size: 1.9rem; font-variant-numeric: tabular-nums; }
+.stat span { color: var(--muted); font-size: .88rem; }
+.recap { text-align: left; max-width: 34em; display: grid; gap: .4rem; padding-left: 1.2rem; margin: 0; }
+
+.confetti { position: fixed; inset: 0; pointer-events: none; z-index: 20; overflow: hidden; }
+.confetti i { position: absolute; top: -20px; width: 10px; height: 14px; border-radius: 2px; animation: fall 1.6s ease-in forwards; }
+@keyframes fall { to { transform: translateY(105vh) rotate(540deg); } }
+
+
+/* ---------- bright classroom accents ---------- */
+body { background: radial-gradient(var(--line) 1.6px, transparent 1.7px) 0 0 / 24px 24px, var(--bg); }
+.bar { border-bottom: 4px solid var(--accent); }
+.brand { color: var(--accent); font-weight: 600; }
+.tab { font-weight: 500; }
+.tab[aria-selected="true"] { color: #FFFFFF; }
+#tab-start[aria-selected="true"] { background: var(--accent); }
+#tab-learn[aria-selected="true"] { background: var(--pink); }
+#tab-robot[aria-selected="true"] { background: var(--purple); }
+#tab-quiz[aria-selected="true"] { background: var(--good); }
+.eyebrow { color: var(--pink); font-weight: 500; }
+.hero h1 { color: var(--ink); }
+.hero h1 .hl { color: var(--accent); }
+.goals b { display: inline-grid; place-items: center; width: 2rem; height: 2rem; min-width: 2rem; border-radius: 10px; color: #FFFFFF; }
+.goals li:nth-child(1) b { background: var(--accent); }
+.goals li:nth-child(2) b { background: var(--pink); }
+.goals li:nth-child(3) b { background: var(--good); }
+.mission { background: var(--star-soft); border: 3px solid var(--star); }
+.mission .eyebrow { color: #B86E00; }
+.def mark { background: var(--star-soft); color: var(--ink); box-shadow: inset 0 -.35em 0 var(--star); }
+.trait { border-width: 0; }
+.trait h3 { font-weight: 600; }
+.trait p { color: var(--ink); }
+.trait:nth-child(1) { background: var(--accent-soft); } .trait:nth-child(1) .k, .trait:nth-child(1) h3 { color: var(--accent-shadow); }
+.trait:nth-child(2) { background: var(--pink-soft); } .trait:nth-child(2) .k, .trait:nth-child(2) h3 { color: #C2185B; }
+.trait:nth-child(3) { background: var(--purple-soft); } .trait:nth-child(3) .k, .trait:nth-child(3) h3 { color: #5B2FD6; }
+.trait:nth-child(4) { background: var(--good-bg); } .trait:nth-child(4) .k, .trait:nth-child(4) h3 { color: #0E7A37; }
+.rep { border-top: 6px solid var(--accent); }
+.rep:nth-child(2) { border-top-color: var(--pink); }
+.rep:nth-child(3) { border-top-color: var(--purple); }
+pre.code { background: var(--purple-soft); }
+pre.code .kw { color: #C2185B; }
+.activity { border: 3px solid var(--pink); }
+.timer { color: var(--pink); }
+.board { background: var(--board); }
+.cell.start { box-shadow: inset 0 0 0 4px var(--accent); }
+.lvl[aria-pressed="true"] { border-color: var(--purple); color: #FFFFFF; background: var(--purple); }
+.lvl[aria-pressed="true"] .ok { color: #FFFFFF; }
+.pad .btn[data-cmd="D"] { background: var(--pink); box-shadow: 0 4px 0 #C2185B; }
+.pad .btn[data-cmd="L"] { background: var(--purple); box-shadow: 0 4px 0 #5B2FD6; }
+.pad .btn[data-cmd="R"] { background: var(--orange); box-shadow: 0 4px 0 #C25E00; }
+.cmd[data-c="U"] { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.cmd[data-c="D"] { border-color: var(--pink); color: #C2185B; background: var(--pink-soft); }
+.cmd[data-c="L"] { border-color: var(--purple); color: #5B2FD6; background: var(--purple-soft); }
+.cmd[data-c="R"] { border-color: var(--orange); color: #C25E00; background: var(--orange-soft); }
+.cmd.now { outline: 4px solid var(--star); outline-offset: 2px; }
+.cmd.err { border-color: var(--bad); background: var(--bad-bg); color: var(--bad); }
+#run { background: var(--good); box-shadow: 0 4px 0 #0E7A37; }
+.msg { background: var(--surface); border: 2px solid var(--line); }
+.msg.good { border-color: var(--good); }
+.msg.bad { border-color: var(--bad); }
+.qcard { border: 3px solid var(--line); }
+.qkind { color: var(--pink); }
+.pbar span { background: linear-gradient(90deg, var(--good), #4ADE80); }
+.xp { color: #B86E00; background: var(--star-soft); padding: .1rem .7rem; border-radius: 999px; }
+.opt:nth-child(1) .key { border-color: var(--accent); color: var(--accent); }
+.opt:nth-child(2) .key { border-color: var(--pink); color: #C2185B; }
+.opt:nth-child(3) .key { border-color: var(--purple); color: #5B2FD6; }
+.opt:nth-child(4) .key { border-color: var(--orange); color: #C25E00; }
+.mini { background: var(--board); }
+
+@media (max-width: 900px) {
+  .hero, .robot-grid, .activity, .mission { grid-template-columns: minmax(0, 1fr); }
+  .traits { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .reps { grid-template-columns: minmax(0, 1fr); }
+  .board { width: 100%; }
+}
+@media (max-width: 560px) {
+  .opts, .traits { grid-template-columns: minmax(0, 1fr); }
+  .qtop { grid-template-columns: minmax(0, 1fr) auto; }
+  .qtop .xp { display: none; }
+  .tabs { margin-left: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="bitbot" viewBox="0 0 100 100">
+      <line x1="50" y1="6" x2="50" y2="20" stroke="var(--ink)" stroke-width="4" stroke-linecap="round"/>
+      <circle cx="50" cy="7" r="6" fill="var(--star)"/>
+      <rect x="14" y="20" width="72" height="56" rx="18" fill="var(--accent)"/>
+      <rect x="24" y="31" width="52" height="30" rx="12" fill="var(--surface)"/>
+      <circle cx="39" cy="46" r="6" fill="var(--ink)"/>
+      <circle cx="61" cy="46" r="6" fill="var(--ink)"/>
+      <circle cx="41" cy="44" r="2" fill="var(--surface)"/>
+      <circle cx="63" cy="44" r="2" fill="var(--surface)"/>
+      <rect x="6" y="40" width="8" height="18" rx="4" fill="var(--accent-shadow)"/>
+      <rect x="86" y="40" width="8" height="18" rx="4" fill="var(--accent-shadow)"/>
+      <rect x="28" y="78" width="16" height="14" rx="5" fill="var(--accent-shadow)"/>
+      <rect x="56" y="78" width="16" height="14" rx="5" fill="var(--accent-shadow)"/>
+      <path d="M42 66 Q50 71 58 66" stroke="var(--surface)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="star" viewBox="0 0 24 24"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z"/></symbol>
+    <symbol id="house" viewBox="0 0 24 24"><path d="M12 3L2.5 11h2.5v9.5h5.5v-6h3v6h5.5V11h2.5z"/></symbol>
+    <symbol id="heart" viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.8 4.5c2.1 0 3.6 1.2 5.2 3 1.6-1.8 3.1-3 5.2-3 3.8 0 5.9 3.9 4.4 7.3C19.5 16.4 12 21 12 21z"/></symbol>
+  </defs>
+</svg>
+
+<header class="bar">
+  <div class="wrap">
+    <div class="brand"><svg aria-hidden="true"><use href="#bitbot"/></svg>ภารกิจหุ่นยนต์บิต</div>
+    <nav class="tabs" role="tablist" aria-label="ส่วนของบทเรียน">
+      <button class="tab" role="tab" data-view="start" id="tab-start"><span class="n">1</span>เริ่มต้น</button>
+      <button class="tab" role="tab" data-view="learn" id="tab-learn"><span class="n">2</span>ความรู้</button>
+      <button class="tab" role="tab" data-view="robot" id="tab-robot"><span class="n">3</span>สั่งหุ่นยนต์</button>
+      <button class="tab" role="tab" data-view="quiz" id="tab-quiz"><span class="n">4</span>ควิซ</button>
+    </nav>
+    <button class="icon-btn" id="sound-btn" aria-pressed="true">เสียง: เปิด</button>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- START -->
+  <section class="view" id="view-start" role="tabpanel" aria-labelledby="tab-start">
+    <div class="hero">
+      <div>
+        <p class="eyebrow">วิทยาการคำนวณ ม.1 · อัลกอริทึมกับการแก้ปัญหา</p>
+        <h1>วันนี้เราจะสอน<span class="hl">หุ่นยนต์บิต</span><br>ให้ทำงานตามคำสั่ง</h1>
+        <p class="lead">บิตเป็นหุ่นยนต์ที่ทำตามคำสั่งทุกคำ แต่บิตไม่รู้ว่าเราคิดอะไรอยู่ ถ้าคำสั่งไม่ชัดเจน บิตจะทำผิดทันที</p>
+        <ul class="goals">
+          <li><b>K</b><span>อธิบายได้ว่าอัลกอริทึมคืออะไร และอัลกอริทึมที่ดีเป็นอย่างไร</span></li>
+          <li><b>P</b><span>ออกแบบคำสั่งพาบิตไปถึงเป้าหมาย และหาจุดผิดของคำสั่งได้</span></li>
+          <li><b>A</b><span>ช่วยกันคิดเป็นทีม และทำภารกิจจนสำเร็จ</span></li>
+        </ul>
+      </div>
+      <svg class="hero-bot" viewBox="0 0 100 100" role="img" aria-label="หุ่นยนต์บิต"><use href="#bitbot"/></svg>
+    </div>
+
+    <div class="panel mission">
+      <div>
+        <p class="eyebrow">ภารกิจแรก</p>
+        <h2>สั่งครูทำแซนด์วิชแยม</h2>
+        <p style="margin-top:.4rem">วันนี้ครูเป็นหุ่นยนต์ ครูจะทำตามคำสั่งแบบตรงตัวทุกคำ ใครบอกขั้นตอนให้ครูทำแซนด์วิชได้สำเร็จ?</p>
+        <div class="chips"><span class="chip">ขนมปัง 2 แผ่น</span><span class="chip">แยม 1 ขวด</span><span class="chip">มีดทาเนย</span><span class="chip">จาน</span></div>
+      </div>
+      <button class="btn" data-go="learn">ไปที่ความรู้ →</button>
+    </div>
+  </section>
+
+  <!-- LEARN -->
+  <section class="view" id="view-learn" role="tabpanel" aria-labelledby="tab-learn" hidden>
+    <div>
+      <p class="eyebrow">อัลกอริทึม (Algorithm)</p>
+      <p class="def" style="margin-top:.4rem">คือ <mark>ลำดับขั้นตอนการแก้ปัญหา</mark> ที่เขียนไว้อย่างชัดเจน ทำตามแล้วได้ผลลัพธ์ที่ถูกต้อง</p>
+    </div>
+
+    <div class="traits">
+      <div class="trait"><span class="k">ลักษณะ 1</span><h3>ชัดเจน ไม่กำกวม</h3><p>อ่านแล้วเข้าใจตรงกัน เช่น "เปิดฝาขวดแยม" ไม่ใช่แค่ "ใช้แยม"</p></div>
+      <div class="trait"><span class="k">ลักษณะ 2</span><h3>เรียงลำดับถูกต้อง</h3><p>ต้องตอกไข่ก่อน จึงจะตักไข่ขึ้นจานได้</p></div>
+      <div class="trait"><span class="k">ลักษณะ 3</span><h3>มีจุดเริ่มต้นและจุดจบ</h3><p>รู้ว่าเริ่มที่ไหน และหยุดเมื่อไร ไม่ทำไปเรื่อยๆ</p></div>
+      <div class="trait"><span class="k">ลักษณะ 4</span><h3>ได้ผลลัพธ์ที่ถูกต้อง</h3><p>ทำตามแล้วแก้ปัญหาได้จริง ทุกครั้ง</p></div>
+    </div>
+
+    <div>
+      <p class="eyebrow">ตัวอย่าง: การต้มบะหมี่กึ่งสำเร็จรูป เขียนได้ 3 แบบ</p>
+    </div>
+    <div class="reps">
+      <div class="panel rep">
+        <h3>1. ข้อความ</h3>
+        <ol>
+          <li>ต้มน้ำให้เดือด</li>
+          <li>ใส่เส้นและเครื่องปรุงลงชาม</li>
+          <li>เทน้ำร้อนลงชาม แล้วปิดฝา</li>
+          <li>รอจนครบ 3 นาที</li>
+          <li>เปิดฝา พร้อมรับประทาน</li>
+        </ol>
+      </div>
+      <div class="panel rep">
+        <h3>2. รหัสลำลอง (Pseudocode)</h3>
+<pre class="code"><span class="kw">START</span>
+  ต้มน้ำให้เดือด
+  ใส่เส้นและเครื่องปรุงลงชาม
+  เทน้ำร้อน แล้วปิดฝา
+  <span class="kw">WHILE</span> ยังไม่ครบ 3 นาที
+      รอ
+  <span class="kw">END WHILE</span>
+  เปิดฝา รับประทาน
+<span class="kw">END</span></pre>
+      </div>
+      <div class="panel rep">
+        <h3>3. ผังงาน (Flowchart)</h3>
+        <svg class="flow" viewBox="0 0 280 430" role="img" aria-label="ผังงานการต้มบะหมี่">
+          <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0L10 5L0 10z"/></marker></defs>
+          <rect class="term" x="95" y="8" width="90" height="32" rx="16"/><text x="140" y="24">เริ่มต้น</text>
+          <line class="ln" x1="140" y1="40" x2="140" y2="58" marker-end="url(#ar)"/>
+          <rect class="box" x="60" y="60" width="160" height="36" rx="3"/><text x="140" y="78">ต้มน้ำให้เดือด</text>
+          <line class="ln" x1="140" y1="96" x2="140" y2="114" marker-end="url(#ar)"/>
+          <rect class="box" x="45" y="116" width="190" height="36" rx="3"/><text x="140" y="134">ใส่เส้นและเครื่องปรุงลงชาม</text>
+          <line class="ln" x1="140" y1="152" x2="140" y2="170" marker-end="url(#ar)"/>
+          <rect class="box" x="45" y="172" width="190" height="36" rx="3"/><text x="140" y="190">เทน้ำร้อน แล้วปิดฝา</text>
+          <line class="ln" x1="140" y1="208" x2="140" y2="226" marker-end="url(#ar)"/>
+          <path class="dec" d="M140 228 L215 268 L140 308 L65 268 Z"/><text x="140" y="268">ครบ 3 นาทีหรือยัง?</text>
+          <path class="ln" d="M215 268 H251 V250" marker-end="url(#ar)"/>
+          <rect class="box" x="228" y="214" width="46" height="34" rx="3"/><text x="251" y="231">รอ</text>
+          <path class="ln" d="M228 231 H196 L174 243" marker-end="url(#ar)"/>
+          <text class="lbl" x="232" y="282">ยัง</text>
+          <line class="ln" x1="140" y1="308" x2="140" y2="336" marker-end="url(#ar)"/>
+          <text class="lbl" x="156" y="322">ครบ</text>
+          <rect class="box" x="60" y="338" width="160" height="36" rx="3"/><text x="140" y="356">เปิดฝา รับประทาน</text>
+          <line class="ln" x1="140" y1="374" x2="140" y2="390" marker-end="url(#ar)"/>
+          <rect class="term" x="95" y="392" width="90" height="32" rx="16"/><text x="140" y="408">จบ</text>
+        </svg>
+      </div>
+    </div>
+
+    <div class="panel activity">
+      <div>
+        <p class="eyebrow">กิจกรรมกลุ่ม · 3 นาที</p>
+        <h2 style="font-size:1.5rem">เรียงบัตรคำสั่ง "ส่งข้อความหาเพื่อน"</h2>
+        <p class="muted" style="margin-top:.3rem">แต่ละกลุ่มเรียงบัตร 6 ใบให้ถูกลำดับ กลุ่มที่เสร็จก่อนยกมือ</p>
+        <ol class="answer-list" id="card-answer" hidden>
+          <li>ปลดล็อกโทรศัพท์</li><li>เปิดแอปส่งข้อความ</li><li>เลือกชื่อเพื่อนที่ต้องการส่ง</li>
+          <li>พิมพ์ข้อความ</li><li>ตรวจทานข้อความก่อนส่ง</li><li>กดปุ่มส่ง</li>
+        </ol>
+      </div>
+      <div>
+        <div class="timer" id="timer" aria-live="polite">3:00</div>
+        <div class="timer-ctl">
+          <button class="btn" id="timer-go">เริ่มจับเวลา</button>
+          <button class="btn ghost" id="timer-reset">รีเซ็ต</button>
+          <button class="btn ghost" id="reveal">ดูเฉลย</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ROBOT -->
+  <section class="view" id="view-robot" role="tabpanel" aria-labelledby="tab-robot" hidden>
+    <div class="robot-head">
+      <div>
+        <p class="eyebrow">ภารกิจพาบิตกลับบ้าน</p>
+        <h2 style="font-size:1.7rem" id="lvl-title">ด่านที่ 1</h2>
+      </div>
+      <div class="levels" id="levels"></div>
+    </div>
+    <div class="robot-grid">
+      <div class="board" id="board" aria-label="ตาราง 5 x 5"></div>
+      <div class="ctl">
+        <p class="task" id="task"></p>
+        <div class="pad" role="group" aria-label="ปุ่มเพิ่มคำสั่ง">
+          <button class="btn" data-cmd="U" aria-label="ขึ้น">↑<small>ขึ้น</small></button>
+          <button class="btn" data-cmd="D" aria-label="ลง">↓<small>ลง</small></button>
+          <button class="btn" data-cmd="L" aria-label="ซ้าย">←<small>ซ้าย</small></button>
+          <button class="btn" data-cmd="R" aria-label="ขวา">→<small>ขวา</small></button>
+        </div>
+        <div class="prog-wrap">
+          <div class="prog-top"><h3>อัลกอริทึมของเรา</h3><span class="count" id="count">0 คำสั่ง</span></div>
+          <div class="prog" id="prog"></div>
+          <p class="hint" style="margin-top:.5rem">แตะคำสั่งในแถวนี้เพื่อลบออก · ใช้ปุ่มลูกศรบนคีย์บอร์ดได้</p>
+        </div>
+        <div class="run-row">
+          <button class="btn" id="run">▶ ให้บิตเดิน</button>
+          <button class="btn ghost" id="undo">ลบคำสั่งล่าสุด</button>
+          <button class="btn ghost" id="clear">ล้างทั้งหมด</button>
+        </div>
+        <div class="msg" id="msg" aria-live="polite">กดลูกศรเพื่อเขียนคำสั่ง แล้วกด "ให้บิตเดิน"</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ -->
+  <section class="view" id="view-quiz" role="tabpanel" aria-labelledby="tab-quiz" hidden>
+    <div class="quiz" id="quiz"></div>
+  </section>
+</main>
+
+<div class="confetti" id="confetti" aria-hidden="true"></div>
+
+<script>
+(() => {
+  const $ = (s, el = document) => el.querySelector(s);
+  const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+  const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  /* ---------- sound ---------- */
+  let soundOn = true, actx = null;
+  function tone(freqs, dur = 0.12, type = 'sine') {
+    if (!soundOn) return;
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      let t = actx.currentTime;
+      freqs.forEach(f => {
+        const o = actx.createOscillator(), g = actx.createGain();
+        o.type = type; o.frequency.value = f;
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.18, t + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        o.connect(g).connect(actx.destination); o.start(t); o.stop(t + dur + 0.02);
+        t += dur * 0.8;
+      });
+    } catch (e) {}
+  }
+  const sfx = {
+    tap: () => tone([660], 0.05, 'triangle'),
+    step: () => tone([520], 0.06, 'triangle'),
+    star: () => tone([880, 1175], 0.09, 'triangle'),
+    good: () => tone([660, 880, 1320], 0.11),
+    bad: () => tone([220, 165], 0.18, 'square'),
+    win: () => tone([523, 659, 784, 1047], 0.13),
+  };
+  $('#sound-btn').addEventListener('click', e => {
+    soundOn = !soundOn;
+    e.currentTarget.textContent = 'เสียง: ' + (soundOn ? 'เปิด' : 'ปิด');
+    e.currentTarget.setAttribute('aria-pressed', soundOn);
+  });
+
+  function confetti() {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const box = $('#confetti');
+    const cs = getComputedStyle(document.documentElement);
+    const cols = ['--accent', '--star', '--good', '--bad'].map(v => cs.getPropertyValue(v).trim());
+    for (let i = 0; i < 70; i++) {
+      const p = document.createElement('i');
+      p.style.left = Math.random() * 100 + 'vw';
+      p.style.background = cols[i % cols.length];
+      p.style.animationDelay = Math.random() * 0.5 + 's';
+      p.style.animationDuration = 1.2 + Math.random() * 1 + 's';
+      box.appendChild(p);
+    }
+    setTimeout(() => { box.innerHTML = ''; }, 2800);
+  }
+
+  /* ---------- tabs ---------- */
+  const views = ['start', 'learn', 'robot', 'quiz'];
+  function show(v) {
+    if (!views.includes(v)) v = 'start';
+    views.forEach(x => {
+      $('#view-' + x).hidden = x !== v;
+      $('#tab-' + x).setAttribute('aria-selected', x === v);
+    });
+    if (location.hash !== '#' + v) history.replaceState(null, '', '#' + v);
+    window.scrollTo({ top: 0 });
+  }
+  $$('.tab').forEach(b => b.addEventListener('click', () => show(b.dataset.view)));
+  $$('[data-go]').forEach(b => b.addEventListener('click', () => show(b.dataset.go)));
+  window.addEventListener('hashchange', () => show(location.hash.slice(1)));
+
+  /* ---------- timer ---------- */
+  let tLeft = 180, tId = null;
+  const tEl = $('#timer');
+  const paint = () => { tEl.textContent = Math.floor(tLeft / 60) + ':' + String(tLeft % 60).padStart(2, '0'); tEl.classList.toggle('done', tLeft === 0); };
+  $('#timer-go').addEventListener('click', e => {
+    if (tId) { clearInterval(tId); tId = null; e.currentTarget.textContent = 'จับเวลาต่อ'; return; }
+    if (tLeft === 0) tLeft = 180;
+    e.currentTarget.textContent = 'หยุดชั่วคราว';
+    tId = setInterval(() => { tLeft--; paint(); if (tLeft <= 0) { clearInterval(tId); tId = null; $('#timer-go').textContent = 'เริ่มจับเวลา'; sfx.win(); } }, 1000);
+  });
+  $('#timer-reset').addEventListener('click', () => { clearInterval(tId); tId = null; tLeft = 180; paint(); $('#timer-go').textContent = 'เริ่มจับเวลา'; });
+  $('#reveal').addEventListener('click', e => { const a = $('#card-answer'); a.hidden = !a.hidden; e.currentTarget.textContent = a.hidden ? 'ดูเฉลย' : 'ซ่อนเฉลย'; });
+
+  /* ---------- robot ---------- */
+  const LEVELS = [
+    { name: 'ด่านที่ 1', task: 'อุ่นเครื่อง: เก็บดาว 1 ดวง แล้วกลับบ้าน', start: [4, 0], home: [1, 3], walls: [], stars: [[4, 3]], best: 6 },
+    { name: 'ด่านที่ 2', task: 'มีกำแพงขวางทาง หาทางอ้อม เก็บดาว แล้วกลับบ้าน', start: [4, 0], home: [0, 4], walls: [[3, 0], [3, 1], [3, 2], [1, 2], [1, 3], [1, 4]], stars: [[2, 1]], best: 12 },
+    { name: 'ด่านที่ 3 · ใบงาน', task: 'ทดสอบอัลกอริทึมจากใบงานของกลุ่ม: เก็บดาวให้ครบ 2 ดวง แล้วกลับบ้าน', start: [0, 0], home: [0, 4], walls: [[0, 2], [1, 2], [2, 0], [2, 4], [3, 2]], stars: [[3, 3], [4, 0]], best: 14 },
+  ];
+  const ARROW = { U: '↑', D: '↓', L: '←', R: '→' };
+  const NAME = { U: 'ขึ้น', D: 'ลง', L: 'ซ้าย', R: 'ขวา' };
+  const DELTA = { U: [-1, 0], D: [1, 0], L: [0, -1], R: [0, 1] };
+  const solved = new Set();
+  let lv = 0, prog = [], pos = null, got = new Set(), running = false;
+  const key = (r, c) => r + ',' + c;
+  const board = $('#board');
+
+  function renderLevels() {
+    $('#levels').innerHTML = LEVELS.map((L, i) =>
+      `<button class="lvl" data-lv="${i}" aria-pressed="${i === lv}">${esc(L.name)}${solved.has(i) ? ' <span class="ok">✓</span>' : ''}</button>`).join('');
+    $$('.lvl').forEach(b => b.addEventListener('click', () => { if (!running) loadLevel(+b.dataset.lv); }));
+  }
+  function loadLevel(i) {
+    lv = i; prog = []; renderLevels();
+    const L = LEVELS[lv];
+    $('#lvl-title').textContent = L.name;
+    $('#task').innerHTML = `<b>ภารกิจ:</b> ${esc(L.task)}`;
+    const walls = new Set(L.walls.map(w => key(...w)));
+    const stars = new Set(L.stars.map(s => key(...s)));
+    const cols = 'ABCDE';
+    let html = '';
+    for (let r = 0; r < 5; r++) for (let c = 0; c < 5; c++) {
+      const k = key(r, c);
+      let cls = 'cell', inner = `<span class="coord">${cols[c]}${r + 1}</span>`;
+      if (walls.has(k)) cls += ' wall';
+      else if (k === key(...L.home)) { cls += ' home'; inner += '<svg class="home-ic" aria-label="บ้าน"><use href="#house"/></svg>'; }
+      else if (stars.has(k)) inner += `<svg class="star-ic" data-star="${k}" aria-label="ดาว"><use href="#star"/></svg>`;
+      if (k === key(...L.start)) cls += ' start';
+      html += `<div class="${cls}">${inner}</div>`;
+    }
+    html += '<div class="bot" id="bot"><svg aria-label="บิต"><use href="#bitbot"/></svg></div>';
+    board.innerHTML = html;
+    resetBot();
+    renderProg();
+    setMsg('กดลูกศรเพื่อเขียนคำสั่ง แล้วกด "ให้บิตเดิน"');
+  }
+  function place(r, c) {
+    const bot = $('#bot');
+    bot.style.left = `calc(6px + ${c} * ((100% - 12px - 24px) / 5 + 6px))`;
+    bot.style.top = `calc(6px + ${r} * ((100% - 12px - 24px) / 5 + 6px))`;
+  }
+  function resetBot() {
+    const L = LEVELS[lv];
+    pos = [...L.start]; got = new Set();
+    $$('.star-ic').forEach(s => s.classList.remove('got'));
+    const bot = $('#bot'); bot.classList.remove('crash', 'win');
+    place(...pos);
+    $$('.cmd').forEach(c => c.classList.remove('now', 'done', 'err'));
+  }
+  function renderProg() {
+    const el = $('#prog');
+    el.innerHTML = prog.length ? prog.map((c, i) =>
+      `<button class="cmd" data-c="${c}" data-i="${i}" aria-label="คำสั่งที่ ${i + 1} ${NAME[c]} แตะเพื่อลบ"><i>${i + 1}</i>${ARROW[c]}</button>`).join('')
+      : '<span class="empty">ยังไม่มีคำสั่ง</span>';
+    $('#count').textContent = prog.length + ' คำสั่ง';
+    $$('.cmd', el).forEach(b => b.addEventListener('click', () => { if (running) return; prog.splice(+b.dataset.i, 1); sfx.tap(); resetBot(); renderProg(); }));
+    $('#run').disabled = running || !prog.length;
+  }
+  function setMsg(text, kind = '') { const m = $('#msg'); m.className = 'msg' + (kind ? ' ' + kind : ''); m.textContent = text; }
+  function addCmd(c) {
+    if (running || $('#view-robot').hidden) return;
+    if (prog.length >= 30) { setMsg('เขียนได้สูงสุด 30 คำสั่ง', 'bad'); return; }
+    prog.push(c); sfx.tap(); resetBot(); renderProg();
+    setMsg(`เพิ่มคำสั่ง "${NAME[c]}" แล้ว`);
+  }
+  $$('[data-cmd]').forEach(b => b.addEventListener('click', () => addCmd(b.dataset.cmd)));
+  $('#undo').addEventListener('click', () => { if (running || !prog.length) return; prog.pop(); resetBot(); renderProg(); });
+  $('#clear').addEventListener('click', () => { if (running) return; prog = []; resetBot(); renderProg(); setMsg('ล้างคำสั่งแล้ว เริ่มใหม่ได้เลย'); });
+  document.addEventListener('keydown', e => {
+    if ($('#view-robot').hidden) return;
+    const m = { ArrowUp: 'U', ArrowDown: 'D', ArrowLeft: 'L', ArrowRight: 'R' }[e.key];
+    if (m) { e.preventDefault(); addCmd(m); }
+    else if (e.key === 'Enter' && !running && prog.length && document.activeElement.tagName !== 'BUTTON') run();
+    else if (e.key === 'Backspace' && !running && prog.length) { e.preventDefault(); prog.pop(); resetBot(); renderProg(); }
+  });
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  async function run() {
+    if (running || !prog.length) return;
+    running = true; resetBot(); renderProg();
+    $$('#view-robot .pad .btn, #undo, #clear').forEach(b => b.disabled = true);
+    const L = LEVELS[lv];
+    const walls = new Set(L.walls.map(w => key(...w)));
+    const stars = new Set(L.stars.map(s => key(...s)));
+    const chips = $$('.cmd');
+    setMsg('บิตกำลังเดินตามคำสั่ง...');
+    let fail = null;
+    for (let i = 0; i < prog.length; i++) {
+      chips.forEach(c => c.classList.remove('now'));
+      chips[i].classList.add('now');
+      const [dr, dc] = DELTA[prog[i]];
+      const nr = pos[0] + dr, nc = pos[1] + dc;
+      if (nr < 0 || nr > 4 || nc < 0 || nc > 4) { fail = { i, why: 'เดินออกนอกตาราง' }; break; }
+      if (walls.has(key(nr, nc))) { fail = { i, why: 'ชนกำแพง' }; break; }
+      pos = [nr, nc]; place(nr, nc); sfx.step();
+      await sleep(430);
+      const k = key(nr, nc);
+      if (stars.has(k) && !got.has(k)) { got.add(k); $(`[data-star="${k}"]`).classList.add('got'); sfx.star(); }
+      chips[i].classList.remove('now'); chips[i].classList.add('done');
+    }
+    const bot = $('#bot');
+    if (fail) {
+      chips[fail.i].classList.remove('now'); chips[fail.i].classList.add('err');
+      bot.classList.add('crash'); sfx.bad();
+      setMsg(`${fail.why} ที่คำสั่งที่ ${fail.i + 1} (${NAME[prog[fail.i]]}) แตะคำสั่งนั้นเพื่อลบ แล้วแก้ใหม่`, 'bad');
+    } else {
+      const atHome = pos[0] === L.home[0] && pos[1] === L.home[1];
+      if (atHome && got.size === stars.size) {
+        bot.classList.add('win'); sfx.win(); confetti(); solved.add(lv); renderLevels();
+        const extra = prog.length === L.best ? ' เป็นทางที่สั้นที่สุดแล้ว!' : ` ทางที่สั้นที่สุดใช้ ${L.best} คำสั่ง ลองหาดูไหม?`;
+        setMsg(`สำเร็จ! บิตถึงบ้านและเก็บดาวครบ ใช้ ${prog.length} คำสั่ง${extra}`, 'good');
+      } else if (atHome) {
+        sfx.bad(); setMsg(`ถึงบ้านแล้ว แต่เก็บดาวได้ ${got.size} จาก ${stars.size} ดวง ลองหาทางผ่านดาวให้ครบ`, 'bad');
+      } else {
+        sfx.bad(); setMsg('คำสั่งหมดแล้ว แต่บิตยังไม่ถึงบ้าน เพิ่มคำสั่งต่อได้เลย', 'bad');
+      }
+    }
+    running = false;
+    $$('#view-robot .pad .btn, #undo, #clear').forEach(b => b.disabled = false);
+    $('#run').disabled = !prog.length;
+  }
+  $('#run').addEventListener('click', run);
+
+  /* ---------- quiz ---------- */
+  const Q = [
+    { kind: 'เลือกคำตอบ', type: 'mc', q: 'อัลกอริทึม (Algorithm) คืออะไร',
+      opts: ['ภาษาที่ใช้เขียนโปรแกรม', 'ลำดับขั้นตอนการแก้ปัญหาที่ชัดเจน', 'อุปกรณ์ชิ้นหนึ่งของคอมพิวเตอร์', 'โปรแกรมสำหรับวาดภาพ'], ans: 1,
+      why: 'อัลกอริทึมคือลำดับขั้นตอนการแก้ปัญหา จะเขียนด้วยภาษาโปรแกรมหรือภาษาพูดก็ได้' },
+    { kind: 'เรียงลำดับ', type: 'order', q: 'เรียงขั้นตอนการล้างมือให้ถูกต้อง',
+      items: ['เปิดน้ำ', 'ถูสบู่ให้ทั่วมือ', 'ล้างฟองออก', 'ปิดน้ำ', 'เช็ดมือให้แห้ง'], shuffle: [3, 0, 4, 2, 1],
+      why: 'เปิดน้ำ → ถูสบู่ → ล้างฟอง → ปิดน้ำ → เช็ดมือ ถ้าสลับลำดับ ผลลัพธ์จะผิด' },
+    { kind: 'หาจุดผิด', type: 'bug', q: 'ขั้นตอนทอดไข่ดาวนี้มี 1 ขั้นตอนที่อยู่ผิดที่ แตะขั้นตอนนั้น',
+      steps: ['ตั้งกระทะบนเตา แล้วเปิดไฟ', 'ใส่น้ำมันลงกระทะ', 'ตักไข่ขึ้นใส่จาน', 'ตอกไข่ลงกระทะ', 'รอจนไข่สุก'], ans: 2,
+      why: 'ยังไม่ได้ตอกไข่เลย จะตักไข่ขึ้นจานได้อย่างไร ขั้นตอนนี้ต้องอยู่หลังสุด' },
+    { kind: 'ทายผลลัพธ์', type: 'robot', q: 'บิตอยู่ที่ช่อง D ถ้าทำตามคำสั่งนี้ บิตจะไปอยู่ช่องใด',
+      seq: '→ → ↑', opts: ['ช่อง F', 'ช่อง B', 'ช่อง C', 'ช่อง I'], ans: 2,
+      why: 'จาก D ไปขวา 2 ช่องถึง F แล้วขึ้น 1 ช่องถึง C' },
+    { kind: 'เลือกคำตอบ', type: 'mc', q: 'ข้อใด "ไม่ใช่" ลักษณะของอัลกอริทึมที่ดี',
+      opts: ['ชัดเจน ไม่กำกวม', 'เรียงลำดับขั้นตอนถูกต้อง', 'มีจุดเริ่มต้นและจุดสิ้นสุด', 'เขียนให้ยาวที่สุดเท่าที่ทำได้'], ans: 3,
+      why: 'อัลกอริทึมที่ดีควรกระชับ ใช้ขั้นตอนเท่าที่จำเป็น เหมือนตอนที่เราหาทางที่สั้นที่สุดให้บิต' },
+    { kind: 'ผังงาน', type: 'mc', shape: true, q: 'สัญลักษณ์ผังงานรูปนี้ใช้แทนอะไร',
+      opts: ['การตัดสินใจ (เงื่อนไข)', 'จุดเริ่มต้นหรือจุดสิ้นสุด', 'การประมวลผล', 'การรับข้อมูลเข้า'], ans: 0,
+      why: 'รูปสี่เหลี่ยมขนมเปียกปูนใช้แทนการตัดสินใจ เช่น "ครบ 3 นาทีหรือยัง?"' },
+  ];
+  const MAXH = 3;
+  let qs, qi, hearts, xp, firstTry, correct, picked, checked, orderPicked;
+  const quizEl = $('#quiz');
+
+  function startQuiz() {
+    qs = Q.map((q, i) => i); qi = 0; hearts = MAXH; xp = 0; correct = 0; firstTry = 0;
+    renderQ();
+  }
+  function top() {
+    const pct = Math.round(correct / Q.length * 100);
+    const hs = Array.from({ length: MAXH }, (_, i) => `<svg class="${i < hearts ? '' : 'lost'}"><use href="#heart"/></svg>`).join('');
+    return `<div class="qtop"><div class="pbar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}" aria-label="ความคืบหน้า"><span style="width:${pct}%"></span></div>
+      <div class="hearts" aria-label="หัวใจ ${hearts} ดวง">${hs}</div><div class="xp">${xp} XP</div></div>`;
+  }
+  function renderQ() {
+    if (qi >= qs.length) return renderEnd();
+    const q = Q[qs[qi]];
+    picked = null; checked = false; orderPicked = [];
+    let body = '';
+    if (q.type === 'mc' || q.type === 'robot') {
+      if (q.shape) body += '<svg class="shape" viewBox="0 0 120 80" aria-label="รูปสี่เหลี่ยมขนมเปียกปูน"><path d="M60 4 L116 40 L60 76 L4 40 Z"/></svg>';
+      if (q.type === 'robot') {
+        const L = 'ABCDEFGHI'.split('');
+        body += `<div class="mini-wrap"><div class="mini">${L.map(l => l === 'D'
+          ? `<div class="me" aria-label="ช่อง D บิตอยู่ที่นี่"><svg><use href="#bitbot"/></svg></div>` : `<div>${l}</div>`).join('')}</div>
+          <div><p class="muted">คำสั่ง</p><p class="seq">${q.seq}</p></div></div>`;
+      }
+      body += `<div class="opts">${q.opts.map((o, i) => `<button class="opt" data-i="${i}" aria-pressed="false"><span class="key">${i + 1}</span><span>${esc(o)}</span></button>`).join('')}</div>`;
+    } else if (q.type === 'order') {
+      body += `<div class="slots" id="slots" aria-label="คำตอบของเรา"></div>
+        <div class="bank">${q.shuffle.map(i => `<button class="tile" data-i="${i}">${esc(q.items[i])}</button>`).join('')}</div>`;
+    } else if (q.type === 'bug') {
+      body += `<div class="steps">${q.steps.map((s, i) => `<button class="step" data-i="${i}" aria-pressed="false"><span class="no">${i + 1}</span><span>${esc(s)}</span></button>`).join('')}</div>`;
+    }
+    quizEl.innerHTML = top() + `<div class="qcard"><p class="qkind">${esc(q.kind)} · ข้อ ${Math.min(correct + 1, Q.length)} จาก ${Q.length}</p>
+      <h2 class="qtext">${esc(q.q)}</h2>${body}</div>
+      <div class="fb" id="fb"><p class="muted">${q.type === 'order' ? 'แตะบัตรด้านล่างตามลำดับ แตะบัตรด้านบนเพื่อเอาออก' : 'เลือกคำตอบ แล้วกดตรวจคำตอบ (กดเลข 1–4 บนคีย์บอร์ดได้)'}</p>
+      <button class="btn" id="check" disabled>ตรวจคำตอบ</button></div>`;
+    bindQ(q);
+  }
+  function bindQ(q) {
+    const check = $('#check');
+    if (q.type === 'mc' || q.type === 'robot') {
+      $$('.opt', quizEl).forEach(b => b.addEventListener('click', () => {
+        if (checked) return; picked = +b.dataset.i; sfx.tap();
+        $$('.opt', quizEl).forEach(x => x.setAttribute('aria-pressed', x === b)); check.disabled = false;
+      }));
+    } else if (q.type === 'bug') {
+      $$('.step', quizEl).forEach(b => b.addEventListener('click', () => {
+        if (checked) return; picked = +b.dataset.i; sfx.tap();
+        $$('.step', quizEl).forEach(x => x.setAttribute('aria-pressed', x === b)); check.disabled = false;
+      }));
+    } else if (q.type === 'order') {
+      const slots = $('#slots');
+      const paintSlots = () => {
+        slots.innerHTML = orderPicked.map((i, n) => `<button class="tile" data-i="${i}"><span class="ord">${n + 1}</span>${esc(q.items[i])}</button>`).join('');
+        $$('.bank .tile', quizEl).forEach(t => t.classList.toggle('used', orderPicked.includes(+t.dataset.i)));
+        $$('.tile', slots).forEach(t => t.addEventListener('click', () => {
+          if (checked) return; orderPicked = orderPicked.filter(x => x !== +t.dataset.i); sfx.tap(); paintSlots();
+        }));
+        check.disabled = orderPicked.length !== q.items.length;
+      };
+      $$('.bank .tile', quizEl).forEach(t => t.addEventListener('click', () => {
+        if (checked || orderPicked.includes(+t.dataset.i)) return; orderPicked.push(+t.dataset.i); sfx.tap(); paintSlots();
+      }));
+      paintSlots();
+    }
+    check.addEventListener('click', () => doCheck(q));
+  }
+  function doCheck(q) {
+    if (checked) return;
+    checked = true;
+    let ok;
+    if (q.type === 'order') ok = orderPicked.every((v, i) => v === i);
+    else ok = picked === q.ans;
+    if (q.type === 'mc' || q.type === 'robot') {
+      $$('.opt', quizEl).forEach(b => { const i = +b.dataset.i; if (i === q.ans) b.classList.add('right'); else if (i === picked) b.classList.add('wrong'); });
+    } else if (q.type === 'bug') {
+      $$('.step', quizEl).forEach(b => { const i = +b.dataset.i; if (i === q.ans) b.classList.add('right'); else if (i === picked) b.classList.add('wrong'); });
+    }
+    const idx = qs[qi];
+    if (ok) {
+      correct++; xp += 10; if (!qs.slice(0, qi).includes(idx)) firstTry++; sfx.good();
+    } else {
+      hearts--; sfx.bad(); qs.push(idx);
+    }
+    const fb = $('#fb');
+    fb.className = 'fb ' + (ok ? 'good' : 'bad');
+    const praise = ['เก่งมาก!', 'ถูกต้อง!', 'ยอดเยี่ยม!'][correct % 3];
+    fb.innerHTML = `<div><h3>${ok ? praise + ' +10 XP' : (q.type === 'order' ? 'ยังไม่ถูก ลำดับที่ถูกคือ' : 'ยังไม่ถูก')}</h3><p>${esc(q.why)}${ok ? '' : ' ข้อนี้จะกลับมาให้ลองอีกครั้ง'}</p></div>
+      <button class="btn" id="next">${hearts <= 0 ? 'ดูผล' : 'ไปต่อ'}</button>`;
+    $('.qtop').outerHTML = top();
+    $('#next').addEventListener('click', () => { if (hearts <= 0) return renderEnd(true); qi++; renderQ(); });
+    $('#next').focus();
+  }
+  function renderEnd(out) {
+    const acc = Math.round(firstTry / Q.length * 100);
+    if (!out) { sfx.win(); confetti(); }
+    quizEl.innerHTML = `<div class="qcard result">
+      <svg viewBox="0 0 100 100" style="width:8rem" aria-hidden="true"><use href="#bitbot"/></svg>
+      <h2>${out ? 'หัวใจหมดแล้ว ทบทวนกันอีกนิดนะ' : 'ผ่านภารกิจควิซแล้ว!'}</h2>
+      <div class="stats">
+        <div class="stat"><b>${xp}</b><span>XP ที่ได้</span></div>
+        <div class="stat"><b>${firstTry}/${Q.length}</b><span>ตอบถูกในครั้งแรก</span></div>
+        <div class="stat"><b>${acc}%</b><span>ความแม่นยำ</span></div>
+      </div>
+      <ol class="recap">
+        <li><b>อัลกอริทึม</b> คือลำดับขั้นตอนการแก้ปัญหาที่ชัดเจน</li>
+        <li>อัลกอริทึมที่ดี: ชัดเจน · เรียงลำดับถูก · มีจุดเริ่มและจุดจบ · ได้ผลถูกต้อง</li>
+        <li>เขียนได้ 3 แบบ: ข้อความ · รหัสลำลอง · ผังงาน</li>
+        <li>คาบหน้า: เปลี่ยนคำสั่งที่สั่งบิต ให้เป็นโปรแกรมจริง</li>
+      </ol>
+      <button class="btn" id="again">เล่นอีกครั้ง</button></div>`;
+    $('#again').addEventListener('click', startQuiz);
+  }
+  document.addEventListener('keydown', e => {
+    if ($('#view-quiz').hidden) return;
+    const n = parseInt(e.key, 10);
+    if (n >= 1 && n <= 5) { const b = $$('.opt, .step', quizEl)[n - 1]; if (b) b.click(); }
+    else if (e.key === 'Enter' && document.activeElement.tagName !== 'BUTTON') { const b = $('#next') || $('#check'); if (b && !b.disabled) b.click(); }
+  });
+
+  /* ---------- boot ---------- */
+  loadLevel(0);
+  startQuiz();
+  show(location.hash.slice(1) || 'start');
+})();
+</script>
